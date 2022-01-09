@@ -95,6 +95,8 @@
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     gl.bindVertexArray(null);
 
+    // render loop
+    // -----------
     window.requestAnimationFrame(() => {
       // render
       // ------
