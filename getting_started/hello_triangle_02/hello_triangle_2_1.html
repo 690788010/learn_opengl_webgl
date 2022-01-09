@@ -1,49 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
 </head>
+
 <body>
-    <canvas id="webgl" width="500" height="500"></canvas>
+  <canvas id="webgl" width="500" height="500"></canvas>
 
-    <script>
-        const canvas = document.getElementById("webgl");
-        const gl = canvas.getContext("webgl");
-        // 设置视口大小
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        // 设置清空颜色缓存时的值
-        gl.clearColor(0.2, 0.3, 0.3, 1.0);
-        // 使用预设值清空颜色缓存
-        gl.clear(gl.COLOR_BUFFER_BIT);
+  <script>
+    const canvas = document.getElementById("webgl");
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
-        const vertexShaderSource = `
-            #version 300 es      // 声明版本
-            in vec3 aPos;
-            void main() {
-                gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-            }
-        `;
-        const fragmentShaderSource = `
-            #version 300 es       // 声明版本
-            out vec4 FragColor
-            void main() {
-                FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-            }
-        `;
+    // 着色器源代码
+    const vertexShaderSource = 
+     `#version 300 es      // 声明版本
+      in vec3 aPos;
+      void main() {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+      }
+    `;
+    const fragmentShaderSource = 
+      `#version 300 es       // 声明版本
+      precision mediump float;      // 设置浮点变量的精度
+      out vec4 FragColor;
+      void main() {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+      }
+    `;
+    // 1、创建着色器对象
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    // 2、向着色器对象中填充着色器程序的源代码
+    gl.shaderSource(vertexShader, vertexShaderSource);
+    gl.shaderSource(fragmentShader, fragmentShaderSource);
+    // 3、编译着色器
+    gl.compileShader(vertexShader);
+    gl.compileShader(fragmentShader);
+    // 如果编译失败，则打印错误信息
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+      const msg = gl.getShaderInfoLog(vertexShader);
+      alert(msg);
+      console.log(msg)
+    }
+    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+      const msg = gl.getShaderInfoLog(fragmentShader);
+      alert(msg);
+      console.log(msg)
+    }
+    // 4、创建程序对象
+    const program = gl.createProgram();
+    // 5、将着色器附加到程序对象
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    // 6、链接着色器程序
+    gl.linkProgram(program);
+    // 如果链接失败，则打印错误信息
+    // 即使链接成功了，也有可能运行失败，比如没有为取样器分配纹理单元。这些错误是在运行阶段而不是链接阶段产生的。
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const msg = gl.getProgramInfoLog(program);
+      alert(msg);
+      console.log(msg)
+    }
+    // 7、使用程序对象
+    gl.useProgram(program);
 
-        // 顶点着色器
-        // 1、创建顶点着色器对象
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        // 2、向顶点着色器对象中填充顶点着色器程序的源代码
-        gl.shaderSource(vertexShader, vertexShaderSource);
-        // 3、编译顶点着色器
-        gl.compileShader(vertexShader);
-        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-             
-        }
-    </script>
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    const vertices = [
+        -0.5, -0.5, 0.0, // left  
+        0.5, -0.5, 0.0, // right 
+        0.0,  0.5, 0.0  // top   
+    ]; 
+    const VAO = gl.createVertexArray();
+    const VBO = gl.createBuffer();
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    gl.bindVertexArray(VAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, "aPos");
+    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(aPos);
+
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    gl.bindBuffer(gl.ARRAY_BUFFER, null); 
+
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    gl.bindVertexArray(null);
+
+    window.requestAnimationFrame(() => {
+      // render
+      // ------
+      gl.clearColor(0.2, 0.3, 0.3, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // draw our first triangle
+      gl.useProgram(program);
+      gl.bindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    });
+  </script>
 </body>
+
 </html>
