@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="webgl" width="500" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById("webgl");
+        const gl = canvas.getContext("webgl");
+        // 设置视口大小
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        // 设置清空颜色缓存时的值
+        gl.clearColor(0.2, 0.3, 0.3, 1.0);
+        // 使用预设值清空颜色缓存
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        const vertexShaderSource = `
+            #version 300 es      // 声明版本
+            in vec3 aPos;
+            void main() {
+                gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+            }
+        `;
+        const fragmentShaderSource = `
+            #version 300 es       // 声明版本
+            out vec4 FragColor
+            void main() {
+                FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+            }
+        `;
+
+        // 顶点着色器
+        // 1、创建顶点着色器对象
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        // 2、向顶点着色器对象中填充顶点着色器程序的源代码
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        // 3、编译顶点着色器
+        gl.compileShader(vertexShader);
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+             
+        }
+    </script>
+</body>
+</html>

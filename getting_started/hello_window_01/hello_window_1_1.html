@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="webgl" width="500" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById("webgl");
+        const gl = canvas.getContext("webgl");
+        // 设置视口大小
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    </script>
+</body>
+</html>
