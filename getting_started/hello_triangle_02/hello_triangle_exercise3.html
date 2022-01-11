@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <canvas id="webgl" width="800" height="600"></canvas>
+  
+  <script>
+    // 获取webgl环境对象
+    const canvas = document.getElementById("webgl");
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // 着色器源代码
+    const vertexShaderSource = 
+     `#version 300 es      // 声明版本
+     layout (location = 0) in vec3 aPos;
+      void main() {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+      }
+    `;
+    const fragmentShaderSource = 
+      `#version 300 es       // 声明版本
+      precision mediump float;      // 设置浮点变量的精度
+      out vec4 FragColor;
+      void main() {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+      }
+    `;
+    const fragmentShader2Source = 
+      `#version 300 es       // 声明版本
+      precision mediump float;      // 设置浮点变量的精度
+      out vec4 FragColor;
+      void main() {
+        FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+      }
+    `;
+
+    // 1、创建着色器对象
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const fragmentShaderOrange = gl.createShader(gl.FRAGMENT_SHADER); // the first fragment shader that outputs the color orange
+    const fragmentShaderYellow = gl.createShader(gl.FRAGMENT_SHADER); // the second fragment shader that outputs the color yellow
+    // 2、向着色器对象中填充着色器程序的源代码
+    gl.shaderSource(vertexShader, vertexShaderSource);
+    gl.shaderSource(fragmentShaderOrange, fragmentShaderSource);
+    gl.shaderSource(fragmentShaderYellow, fragmentShader2Source);
+    // 3、编译着色器
+    gl.compileShader(vertexShader);
+    gl.compileShader(fragmentShaderOrange);
+    gl.compileShader(fragmentShaderYellow);
+    // 如果编译失败，则打印错误信息
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+      const msg = gl.getShaderInfoLog(vertexShader);
+      alert(msg);
+      console.log(msg)
+    }
+    if (!gl.getShaderParameter(fragmentShaderOrange, gl.COMPILE_STATUS)) {
+      const msg = gl.getShaderInfoLog(fragmentShaderOrange);
+      alert(msg);
+      console.log(msg)
+    }
+    if (!gl.getShaderParameter(fragmentShaderYellow, gl.COMPILE_STATUS)) {
+      const msg = gl.getShaderInfoLog(fragmentShaderYellow);
+      alert(msg);
+      console.log(msg)
+    }
+    // 4、创建程序对象
+    const shaderProgramOrange = gl.createProgram();
+    const shaderProgramYellow = gl.createProgram();
+    // 5、将着色器附加到程序对象
+    gl.attachShader(shaderProgramOrange, vertexShader);
+    gl.attachShader(shaderProgramOrange, fragmentShaderOrange);
+    gl.attachShader(shaderProgramYellow, vertexShader);
+    gl.attachShader(shaderProgramYellow, fragmentShaderYellow);
+    // 6、链接着色器程序
+    gl.linkProgram(shaderProgramOrange);
+    // 如果链接失败，则打印错误信息
+    // 即使链接成功了，也有可能运行失败，比如没有为取样器分配纹理单元。这些错误是在运行阶段而不是链接阶段产生的。
+    if (!gl.getProgramParameter(shaderProgramOrange, gl.LINK_STATUS)) {
+      const msg = gl.getProgramInfoLog(shaderProgramOrange);
+      alert(msg);
+      console.log(msg)
+    }
+    gl.linkProgram(shaderProgramYellow);
+    // 如果链接失败，则打印错误信息
+    // 即使链接成功了，也有可能运行失败，比如没有为取样器分配纹理单元。这些错误是在运行阶段而不是链接阶段产生的。
+    if (!gl.getProgramParameter(shaderProgramYellow, gl.LINK_STATUS)) {
+      const msg = gl.getProgramInfoLog(shaderProgramYellow);
+      alert(msg);
+      console.log(msg)
+    }
+
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    const firstTriangle = [
+        -0.9, -0.5, 0.0,  // left 
+        -0.0, -0.5, 0.0,  // right
+        -0.45, 0.5, 0.0,  // top 
+    ];
+    const secondTriangle = [
+        0.0, -0.5, 0.0,  // left
+        0.9, -0.5, 0.0,  // right
+        0.45, 0.5, 0.0   // top 
+    ];
+
+    const VBOs = [], VAOs = [];
+    for (let i = 0; i < 2; i++) {
+      VAOs[i] = gl.createVertexArray();
+      VBOs[i] = gl.createBuffer();
+    }
+
+    // first triangle setup
+    // --------------------
+    gl.bindVertexArray(VAOs[0]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, VBOs[0]);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(firstTriangle), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
+    //gl.bindVertexArray(null);     // no need to unbind at all as we directly bind a different VAO the next few lines
+
+    // second triangle setup
+    // ---------------------
+    gl.bindVertexArray(VAOs[1]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, VBOs[1]);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(secondTriangle), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
+    //gl.bindVertexArray(null);     // not really necessary as well, but beware of calls that could affect VAOs while this one is bound (like binding element buffer objects, or enabling/disabling vertex attributes)
+  
+
+    // render loop
+    // -----------
+    window.requestAnimationFrame(() => {
+      // render
+      // ------
+      gl.clearColor(0.2, 0.3, 0.3, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // now when we draw the triangle we first use the vertex and orange fragment shader from the first program
+      gl.useProgram(shaderProgramOrange);
+      // draw first triangle using the data from the first VAO
+      gl.bindVertexArray(VAOs[0]); 
+      gl.drawArrays(gl.TRIANGLES, 0, 3);  // this call should output an orange triangle
+      // then we draw the second triangle using the data from the second VAO
+      // when we draw the second triangle we want to use a different shader program so we switch to the shader program with our yellow fragment shader.
+      gl.useProgram(shaderProgramYellow);
+      gl.bindVertexArray(VAOs[1]); 
+      gl.drawArrays(gl.TRIANGLES, 0, 3);  // this call should output a yellow triangle
+    });
+  </script>
+</body>
+</html>
