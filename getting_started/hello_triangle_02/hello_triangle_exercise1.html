@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
-
 <body>
   <canvas id="webgl" width="800" height="600"></canvas>
 
@@ -21,7 +19,7 @@
     // 着色器源代码
     const vertexShaderSource = 
      `#version 300 es      // 声明版本
-      in vec3 aPos;
+     layout (location = 0) in vec3 aPos;
       void main() {
         gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
       }
@@ -73,11 +71,17 @@
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+    // add a new set of vertices to form a second triangle (a total of 6 vertices); the vertex attribute configuration remains the same (still one 3-float position vector per vertex)
     const vertices = [
-        -0.5, -0.5, 0.0, // left  
-        0.5, -0.5, 0.0, // right 
-        0.0,  0.5, 0.0  // top   
-    ]; 
+      // first triangle
+      -0.9, -0.5, 0.0,  // left 
+      -0.0, -0.5, 0.0,  // right
+      -0.45, 0.5, 0.0,  // top 
+      // second triangle
+      0.0, -0.5, 0.0,  // left
+      0.9, -0.5, 0.0,  // right
+      0.45, 0.5, 0.0   // top 
+    ];
     const VAO = gl.createVertexArray();
     const VBO = gl.createBuffer();
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -108,9 +112,8 @@
       // draw our first triangle
       gl.useProgram(program);
       gl.bindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);  // set the count to 6 since we're drawing 6 vertices now (2 triangles); not 3!
     });
   </script>
 </body>
-
 </html>
