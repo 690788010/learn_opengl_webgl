@@ -103,8 +103,9 @@
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     gl.bindVertexArray(null);
 
+    // render loop
     // -----------
-    window.requestAnimationFrame(() => {
+    function renderLoop() {
       // render
       // ------
       gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -115,7 +116,10 @@
       gl.bindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
       // gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-    });
+    
+      window.requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
   </script>
 </body>
 </html>

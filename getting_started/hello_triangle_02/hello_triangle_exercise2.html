@@ -108,7 +108,7 @@
 
     // render loop
     // -----------
-    window.requestAnimationFrame(() => {
+    function renderLoop() {
       // render
       // ------
       gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -121,7 +121,10 @@
       // then we draw the second triangle using the data from the second VAO
       gl.bindVertexArray(VAOs[1]); 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-    });
+
+      window.requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
   </script>
 </body>
 </html>

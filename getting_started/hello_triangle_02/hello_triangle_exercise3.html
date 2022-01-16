@@ -135,7 +135,7 @@
 
     // render loop
     // -----------
-    window.requestAnimationFrame(() => {
+    function renderLoop() {
       // render
       // ------
       gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -151,7 +151,10 @@
       gl.useProgram(shaderProgramYellow);
       gl.bindVertexArray(VAOs[1]); 
       gl.drawArrays(gl.TRIANGLES, 0, 3);  // this call should output a yellow triangle
-    });
+
+      window.requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
   </script>
 </body>
 </html>

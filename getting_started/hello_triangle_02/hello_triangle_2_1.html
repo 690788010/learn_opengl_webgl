@@ -99,7 +99,7 @@
 
     // render loop
     // -----------
-    window.requestAnimationFrame(() => {
+    function renderLoop() {
       // render
       // ------
       gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -109,7 +109,10 @@
       gl.useProgram(program);
       gl.bindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-    });
+      
+      window.requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
   </script>
 </body>
 
