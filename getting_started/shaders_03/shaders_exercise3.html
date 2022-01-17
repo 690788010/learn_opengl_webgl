@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>shaders_exercise2</title>
+  <title>shaders_exercise3</title>
   <script src="../../lib/Shader.js"></script>
 </head>
 
@@ -21,7 +21,7 @@
 
     // build and compile our shader program
     // ------------------------------------
-    const ourShader = new Shader("shaders/3.2.exercise_shader.vs", "shaders/3.2.exercise_shader.fs"); // you can name your shader files however you like
+    const ourShader = new Shader("shaders/3.3.exercise_shader.vs", "shaders/3.3.exercise_shader.fs"); // you can name your shader files however you like
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -59,10 +59,6 @@
       // ------
       gl.clearColor(0.2, 0.3, 0.3, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
-
-      // set offset
-      const offset = 0.5;
-      ourShader.setFloat("xOffset", offset);
 
       // render the triangle
       ourShader.use();
