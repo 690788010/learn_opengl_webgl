@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>textures_exercise_1</title>
+  <title>textures_exercise_2</title>
   <script src="../../lib/Shader.js"></script>
 </head>
 <body>
@@ -19,16 +19,16 @@
 
     // build and compile our shader program
     // ------------------------------------
-    const ourShader = new Shader("shaders/texture_exercise_1.vs", "shaders/texture_exercise_1.fs");
+    const ourShader = new Shader("shaders/texture_exercise_2.vs", "shaders/texture_exercise_2.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     const vertices = [
       // positions          // colors           // texture coords
-       0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   1.0, 1.0, // top right
-       0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   1.0, 0.0, // bottom right
+       0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   2.0, 2.0, // top right
+       0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   2.0, 0.0, // bottom right
       -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,   0.0, 0.0, // bottom left
-      -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 1.0  // top left 
+      -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 2.0  // top left 
     ];
     const indices = [
       0, 1, 3, // first triangle
@@ -62,8 +62,8 @@
     texture1 = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture1); 
     // set the texture wrapping parameters
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     // set texture filtering parameters
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -97,7 +97,7 @@
         // either set it manually like so:
         gl.uniform1i(gl.getUniformLocation(ourShader.ID, "texture1"), 0);
         // or set it via the texture class
-        gl.uniform1i(gl.getUniformLocation(ourShader.ID, "texture2"), 1);
+        ourShader.setInt("texture2", 1);
         // render loop
         renderLoop();
       })
