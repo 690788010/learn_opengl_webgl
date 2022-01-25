@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>6.2.coordinate_systems_depth</title>
+  <script src="../../lib/Shader.js"></script>
+  <script src="../../lib/MV.js"></script>
+</head>
+<body>
+  <canvas id="webgl" width="800" height="600"></canvas>
+  
+  <script>
+    // 获取webgl环境对象
+    const canvas = document.getElementById("webgl");
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // configure global opengl state
+    // -----------------------------
+    gl.enable(gl.DEPTH_TEST);
+
+    // build and compile our shader program
+    // ------------------------------------
+    const ourShader = new Shader("shaders/6.2.coordinate_systems.vs", "shaders/6.2.coordinate_systems.fs");
+
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    const vertices = [
+      -0.5, -0.5, -0.5,  0.0, 0.0,
+       0.5, -0.5, -0.5,  1.0, 0.0,
+       0.5,  0.5, -0.5,  1.0, 1.0,
+       0.5,  0.5, -0.5,  1.0, 1.0,
+      -0.5,  0.5, -0.5,  0.0, 1.0,
+      -0.5, -0.5, -0.5,  0.0, 0.0,
+
+      -0.5, -0.5,  0.5,  0.0, 0.0,
+       0.5, -0.5,  0.5,  1.0, 0.0,
+       0.5,  0.5,  0.5,  1.0, 1.0,
+       0.5,  0.5,  0.5,  1.0, 1.0,
+      -0.5,  0.5,  0.5,  0.0, 1.0,
+      -0.5, -0.5,  0.5,  0.0, 0.0,
+
+      -0.5,  0.5,  0.5,  1.0, 0.0,
+      -0.5,  0.5, -0.5,  1.0, 1.0,
+      -0.5, -0.5, -0.5,  0.0, 1.0,
+      -0.5, -0.5, -0.5,  0.0, 1.0,
+      -0.5, -0.5,  0.5,  0.0, 0.0,
+      -0.5,  0.5,  0.5,  1.0, 0.0,
+
+       0.5,  0.5,  0.5,  1.0, 0.0,
+       0.5,  0.5, -0.5,  1.0, 1.0,
+       0.5, -0.5, -0.5,  0.0, 1.0,
+       0.5, -0.5, -0.5,  0.0, 1.0,
+       0.5, -0.5,  0.5,  0.0, 0.0,
+       0.5,  0.5,  0.5,  1.0, 0.0,
+
+      -0.5, -0.5, -0.5,  0.0, 1.0,
+       0.5, -0.5, -0.5,  1.0, 1.0,
+       0.5, -0.5,  0.5,  1.0, 0.0,
+       0.5, -0.5,  0.5,  1.0, 0.0,
+      -0.5, -0.5,  0.5,  0.0, 0.0,
+      -0.5, -0.5, -0.5,  0.0, 1.0,
+
+      -0.5,  0.5, -0.5,  0.0, 1.0,
+       0.5,  0.5, -0.5,  1.0, 1.0,
+       0.5,  0.5,  0.5,  1.0, 0.0,
+       0.5,  0.5,  0.5,  1.0, 0.0,
+      -0.5,  0.5,  0.5,  0.0, 0.0,
+      -0.5,  0.5, -0.5,  0.0, 1.0
+    ];
+    const VAO = gl.createVertexArray();
+    const VBO = gl.createBuffer();
+    
+    gl.bindVertexArray(VAO);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+    // position attribute
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 5 * Float32Array.BYTES_PER_ELEMENT, 0);
+    gl.enableVertexAttribArray(0);
+    // texture coord attribute
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 5 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
+    gl.enableVertexAttribArray(1);
+
+    // load and create a texture 
+    // -------------------------
+    let texture1 = null, texture2 = null;
+    // texture 1
+    // ---------
+    texture1 = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture1); 
+    // set the texture wrapping parameters
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    // set texture filtering parameters
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // load image, create texture and generate mipmaps
+    const data = new Image;
+    data.addEventListener('load', () => {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, data.width, data.height, 0, gl.RGB, gl.UNSIGNED_BYTE, data);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      // texture 2
+      // ---------
+      texture2 = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture2); 
+      // set the texture wrapping parameters
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      // set texture filtering parameters
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      // load image, create texture and generate mipmaps
+      const data2 = new Image;
+      data2.addEventListener('load', () => {
+        // flip loaded texture's on the y-axis.
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, data2.width, data2.height, 0, gl.RGB, gl.UNSIGNED_BYTE, data2);
+        gl.generateMipmap(gl.TEXTURE_2D);
+
+        // tell webgl for each sampler to which texture unit it belongs to (only has to be done once)
+        // -------------------------------------------------------------------------------------------
+        ourShader.use(); 
+        ourShader.setInt("texture1", 0);
+        ourShader.setInt("texture2", 1);
+        // render loop
+        renderLoop();
+      })
+      data2.src = "../../resources/textures/awesomeface.png";
+    })
+    data.src = "../../resources/textures/container.jpg";  
+
+    // render loop
+    // -----------
+    const start = Date.now();
+    function renderLoop() {
+      // render
+      // ------
+      gl.clearColor(0.2, 0.3, 0.3, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // bind textures on corresponding texture units
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture1);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, texture2);
+
+      // activate shader
+      ourShader.use();
+
+      // create transformations
+      let model = new mat4();   // make sure to initialize matrix to identity matrix first
+      let view = new mat4();
+      let projection = new mat4();
+      model = mult(model, rotate((Date.now() - start) / 25, [0.5, 1.0, 0.0]));
+      view = mult(view, translate(0.0, 0.0, -3.0));
+      projection = perspective(45, canvas.width/canvas.height, 0.1, 100.0);
+      // retrieve the matrix uniform locations
+      const modelLoc = gl.getUniformLocation(ourShader.ID, "model");
+      const viewLoc  = gl.getUniformLocation(ourShader.ID, "view");
+      // pass them to the shaders (3 different ways)
+      gl.uniformMatrix4fv(modelLoc, false, flatten(model));
+      gl.uniformMatrix4fv(viewLoc, false, flatten(view));
+      // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+      ourShader.setMat4("projection", projection);
+      
+      // render container
+      gl.bindVertexArray(VAO);
+      gl.drawArrays(gl.TRIANGLES, 0, 36);
+
+      window.requestAnimationFrame(renderLoop);
+    }
+  </script>
+</body>
+</html>
