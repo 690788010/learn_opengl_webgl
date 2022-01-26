@@ -185,7 +185,8 @@
       }
     })
 
-    // 绑定鼠标滑动事件
+    // whenever the mouse moves, this callback is called
+    // -------------------------------------------------------
     canvas.addEventListener("mousemove", (event) => {
       const xpos = event.clientX;
       const ypos = event.clientY;
@@ -221,6 +222,18 @@
       front[1] = Math.sin(radians(pitch));
       front[2] = Math.sin(radians(yaw)) * Math.cos(radians(pitch));
       cameraFront = normalize(front);
+    })
+
+    // whenever the mouse scroll wheel scrolls, this callback is called
+    // ----------------------------------------------------------------------
+    canvas.addEventListener("mousewheel", (event) => {
+      fov -= event.wheelDelta * 0.05;
+      if (fov < 1.0) {
+        fov = 1.0;
+      }
+      if (fov > 45.0) {
+        fov = 45.0;
+      }
     })
 
     // render loop
