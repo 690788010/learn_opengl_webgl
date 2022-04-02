@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>advanced_glsl_ubo</title>
+  <script src="../../lib/shader.js"></script>
+  <script src="../../lib/MV.js"></script>
+  <script src="../../lib/camera.js"></script>
+  <style>
+    #webgl {
+      cursor: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="webgl" width="800" height="600"></canvas>
+  
+  <script>
+    const canvas = document.getElementById("webgl");
+    // camera
+    const camera = new Camera([0.0, 0.0, 3.0]);
+    let lastX =  canvas.width / 2.0;
+    let lastY =  canvas.height / 2.0;
+    let firstMouse = true;
+
+    // timing
+    let deltaTime = 0.0;	// time between current frame and last frame
+    let lastFrame = 0.0;
+
+    // 获取webgl环境对象
+    //canvas.requestPointerLock();
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // configure global opengl state
+    // -----------------------------
+    gl.enable(gl.DEPTH_TEST);
+
+    // build and compile shaders
+    // -------------------------
+    const shaderRed = new Shader("shaders/8.advanced_glsl.vs", "shaders/8.red.fs");
+    const shaderGreen = new Shader("shaders/8.advanced_glsl.vs", "shaders/8.green.fs");
+    const shaderBlue = new Shader("shaders/8.advanced_glsl.vs", "shaders/8.blue.fs");
+    const shaderYellow = new Shader("shaders/8.advanced_glsl.vs", "shaders/8.yellow.fs");
+
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    const cubeVertices = [
+      // positions         
+      -0.5, -0.5, -0.5, 
+       0.5, -0.5, -0.5,  
+       0.5,  0.5, -0.5,  
+       0.5,  0.5, -0.5,  
+      -0.5,  0.5, -0.5, 
+      -0.5, -0.5, -0.5, 
+
+      -0.5, -0.5,  0.5, 
+       0.5, -0.5,  0.5,  
+       0.5,  0.5,  0.5,  
+       0.5,  0.5,  0.5,  
+      -0.5,  0.5,  0.5, 
+      -0.5, -0.5,  0.5, 
+
+      -0.5,  0.5,  0.5, 
+      -0.5,  0.5, -0.5, 
+      -0.5, -0.5, -0.5, 
+      -0.5, -0.5, -0.5, 
+      -0.5, -0.5,  0.5, 
+      -0.5,  0.5,  0.5, 
+
+       0.5,  0.5,  0.5,  
+       0.5,  0.5, -0.5,  
+       0.5, -0.5, -0.5,  
+       0.5, -0.5, -0.5,  
+       0.5, -0.5,  0.5,  
+       0.5,  0.5,  0.5,  
+
+      -0.5, -0.5, -0.5, 
+       0.5, -0.5, -0.5,  
+       0.5, -0.5,  0.5,  
+       0.5, -0.5,  0.5,  
+      -0.5, -0.5,  0.5, 
+      -0.5, -0.5, -0.5, 
+
+      -0.5,  0.5, -0.5, 
+       0.5,  0.5, -0.5,  
+       0.5,  0.5,  0.5,  
+       0.5,  0.5,  0.5,  
+      -0.5,  0.5,  0.5, 
+      -0.5,  0.5, -0.5, 
+    ];
+    // cube VAO
+    const cubeVAO = gl.createVertexArray();
+    const cubeVBO = gl.createBuffer();
+    gl.bindVertexArray(cubeVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVBO);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+    gl.enableVertexAttribArray(0);
+
+    // configure a uniform buffer object
+    // ---------------------------------
+    // first. We get the relevant block indices
+    const uniformBlockIndexRed = gl.getUniformBlockIndex(shaderRed.ID, "Matrices");
+    const uniformBlockIndexGreen = gl.getUniformBlockIndex(shaderGreen.ID, "Matrices");
+    const uniformBlockIndexBlue = gl.getUniformBlockIndex(shaderBlue.ID, "Matrices");
+    const uniformBlockIndexYellow = gl.getUniformBlockIndex(shaderYellow.ID, "Matrices");
+    // then we link each shader's uniform block to this uniform binding point
+    gl.uniformBlockBinding(shaderRed.ID, uniformBlockIndexRed, 0);
+    gl.uniformBlockBinding(shaderGreen.ID, uniformBlockIndexGreen, 0);
+    gl.uniformBlockBinding(shaderBlue.ID, uniformBlockIndexBlue, 0);
+    gl.uniformBlockBinding(shaderYellow.ID, uniformBlockIndexYellow, 0);
+    // Now actually create the buffer
+    const uboMatrices = gl.createBuffer();
+    gl.bindBuffer(gl.UNIFORM_BUFFER, uboMatrices);
+    gl.bufferData(gl.UNIFORM_BUFFER, (32 * Float32Array.BYTES_PER_ELEMENT), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    // define the range of the buffer that links to a uniform binding point
+    //gl.bindBufferRange(gl.UNIFORM_BUFFER, 0, uboMatrices, 0, (32 * Float32Array.BYTES_PER_ELEMENT));
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, uboMatrices);
+
+    // store the projection matrix (we only do this once now) (note: we're not using zoom anymore by changing the FoV)
+    const projection = perspective(45.0, canvas.width/canvas.height, 0.1, 100.0);
+    gl.bindBuffer(gl.UNIFORM_BUFFER, uboMatrices);
+    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, flatten(projection));
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    
+    
+    // process all input: query system whether relevant keys are pressed/released this frame and react accordingly
+    // ---------------------------------------------------------------------------------------------------------
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "w") {
+        camera.ProcessKeyboard("FORWARD", deltaTime);
+      } else if (event.key === "s") {
+        camera.ProcessKeyboard("BACKWARD", deltaTime);
+      } else if (event.key === "a") {
+        camera.ProcessKeyboard("LEFT", deltaTime);
+      } else if (event.key === "d") {
+        camera.ProcessKeyboard("RIGHT", deltaTime);
+      }
+    })
+
+    // render loop
+    // -----------
+    renderLoop();
+
+    // whenever the mouse moves, this callback is called
+    // -------------------------------------------------------
+    canvas.addEventListener("mousemove", (event) => {
+      const xpos = event.clientX;
+      const ypos = event.clientY;
+
+      // if (firstMouse) {
+      //     lastX = xpos;
+      //     lastY = ypos;
+      //     firstMouse = false;
+      // }
+
+      let xoffset = xpos - lastX;
+      let yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+      lastX = xpos;
+      lastY = ypos;
+
+      camera.ProcessMouseMovement(xoffset, yoffset);
+    })
+
+    // whenever the mouse scroll wheel scrolls, this callback is called
+    // ----------------------------------------------------------------------
+    canvas.addEventListener("mousewheel", (event) => {
+      const yoffset = event.wheelDelta * 0.05;
+      camera.ProcessMouseScroll(yoffset);
+    })
+
+    // render loop
+    // -----------
+    function renderLoop() {
+      // per-frame time logic
+      // --------------------
+      const currentFrame = Date.now();
+      deltaTime = (currentFrame - lastFrame) / 1000;
+      lastFrame = currentFrame;
+
+      // render
+      // ------
+      gl.clearColor(0.1, 0.1, 0.1, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      // set the view and projection matrix in the uniform block - we only have to do this once per loop iteration.
+      const view = camera.GetViewMatrix();
+      gl.bindBuffer(gl.UNIFORM_BUFFER, uboMatrices);
+      gl.bufferSubData(gl.UNIFORM_BUFFER, (16 * Float32Array.BYTES_PER_ELEMENT), flatten(view), 0, 16);
+      gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+      // draw 4 cubes 
+      // RED
+      gl.bindVertexArray(cubeVAO);
+      shaderRed.use();
+      let model = new mat4();
+      model = mult(model, translate([-0.75, 0.75, 0.0]));
+      shaderRed.setMat4("model", model);
+      gl.drawArrays(gl.TRIANGLES, 0, 36);
+      // GREEN
+      shaderGreen.use();
+      model = new mat4();
+      model = mult(model, translate([0.75, 0.75, 0.0]));
+      shaderGreen.setMat4("model", model);
+      gl.drawArrays(gl.TRIANGLES, 0, 36);
+      // YELLOW
+      shaderYellow.use();
+      model = new mat4();
+      model = mult(model, translate([-0.75, -0.75, 0.0]));
+      shaderYellow.setMat4("model", model);
+      gl.drawArrays(gl.TRIANGLES, 0, 36);
+      // BLUE
+      shaderBlue.use();
+      model = new mat4();
+      model = mult(model, translate([0.75, -0.75, 0.0]));
+      shaderBlue.setMat4("model", model);
+      gl.drawArrays(gl.TRIANGLES, 0, 36);
+
+      window.requestAnimationFrame(renderLoop);
+    }
+  </script>
+</body>
+</html>
