@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4.1.textures</title>
+  <title>PBO Test</title>
   <script src="../../lib/shader.js"></script>
 </head>
 <body>
@@ -66,13 +66,25 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     // set texture filtering parameters
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     // load image, create texture and generate mipmaps
     const data = new Image;
     data.addEventListener('load', () => {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, data.width, data.height, 0, gl.RGB, gl.UNSIGNED_BYTE, data);
-      gl.generateMipmap(gl.TEXTURE_2D);
+      const canvasEle = document.createElement("canvas");
+      canvasEle.width = data.width;
+      canvasEle.height = data.height;
+      const canvas2D = canvasEle.getContext("2d");
+      canvas2D.drawImage(data, 0, 0);
+      const imageData = canvas2D.getImageData(0, 0, data.width, data.height);
+      
+      const PBO = gl.createBuffer();
+      gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER, PBO);
+      gl.bufferData(gl.PIXEL_UNPACK_BUFFER, imageData.data, gl.STATIC_DRAW);
+      
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, data.width, data.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+      // gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, data.width, data.height, gl.RGB, gl.UNSIGNED_BYTE, 0);
+      // gl.generateMipmap(gl.TEXTURE_2D);
       // render loop
       renderLoop();
     })
